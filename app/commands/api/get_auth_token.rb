@@ -1,36 +1,39 @@
 module Api
   class GetAuthToken
-    include Rails.application.routes.url_helpers
+    include Mixins::Util
 
     def self.call(...)
       new(...).call
     end
 
-    def initialize(host, port, verifier, code)
+    def initialize(verifier, code)
       @client_id = AppConstants::CLIENT_ID
-      @host = host
-      @port = Rails.env.development? ? port : nil
       @verifier = verifier
       @code = code
     end
 
     def call
-      data = {
+      response = post_request(url, params:, headers:)
+
+      response["access_token"]
+    end
+
+    private
+
+    def url = "https://accounts.spotify.com/api/token"
+
+    def headers
+      { "Content-Type" => "application/x-www-form-urlencoded" }
+    end
+
+    def params
+      {
         client_id: @client_id,
         grant_type: "authorization_code",
-        redirect_uri: callback_url(host: @host, port: @port),
+        redirect_uri: Authentication::GetCallbackUrl.call,
         code_verifier: @verifier,
         code: @code
-      }.map { |k, v| "#{k}=#{v}" }.join("&")
-
-      uri = URI('https://accounts.spotify.com/api/token')
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      request = Net::HTTP::Post.new(uri.path, {'Content-Type' => 'application/x-www-form-urlencoded'})
-      request.body = data
-      response = http.request(request)
-
-      JSON.parse(response.body)["access_token"]
+      }
     end
   end
 end

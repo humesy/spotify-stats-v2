@@ -1,5 +1,7 @@
 module Api
   class GetUserDetails
+    include Mixins::Util
+
     def self.call(...)
       new(...).call
     end
@@ -9,19 +11,22 @@ module Api
     end
 
     def call
-      uri = URI('https://api.spotify.com/v1/me')
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      request = Net::HTTP::Get.new(uri.path, {'Authorization' => "Bearer #{@token}"})
-      response = http.request(request)
+      response = get_request(url, headers:)
 
-      details = JSON.parse(response.body)
       {
-        name: details["display_name"],
-        photo: details["images"].last["url"],
-        country: details["country"],
-        email: details["email"]
+        name: response["display_name"],
+        photo: response["images"].last["url"],
+        country: response["country"],
+        email: response["email"]
       }
+    end
+
+    private
+
+    def url = "https://api.spotify.com/v1/me"
+
+    def headers
+      { "Authorization" => "Bearer #{@token}" }
     end
   end
 end
