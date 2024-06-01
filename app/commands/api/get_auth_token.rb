@@ -9,7 +9,7 @@ module Api
     def initialize(host, port, verifier, code)
       @client_id = AppConstants::CLIENT_ID
       @host = host
-      @port = port
+      @port = Rails.env.development? ? port : nil
       @verifier = verifier
       @code = code
     end
